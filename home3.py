@@ -32,6 +32,11 @@ GPIO.setup(29, GPIO.OUT)  # Vana Kapama
 GPIO.setup(31, GPIO.OUT)  # Vana Acma
 GPIO.setup(32, GPIO.OUT)  # Egzersiz
 GPIO.setup(33, GPIO.OUT)  # Hidrofor
+GPIO.setup(35, GPIO.IN)   # Garaj Kapısı
+GPIO.setup(36, GPIO.IN)   # Bahçe Kapısı
+GPIO.setup(37, GPIO.IN)   # PIR sensör 1
+GPIO.setup(38, GPIO.IN)   # PIR sensör 2
+
 win = Tk()
 ex1 = True
 ex2 = True
