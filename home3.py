@@ -32,10 +32,10 @@ GPIO.setup(29, GPIO.OUT)  # Vana Kapama
 GPIO.setup(31, GPIO.OUT)  # Vana Acma
 GPIO.setup(32, GPIO.OUT)  # Egzersiz
 GPIO.setup(33, GPIO.OUT)  # Hidrofor
-GPIO.setup(35, GPIO.IN)   # Garaj Kapısı
-GPIO.setup(36, GPIO.IN)   # Bahçe Kapısı
-GPIO.setup(37, GPIO.IN)   # PIR sensör 1
-GPIO.setup(38, GPIO.IN)   # PIR sensör 2
+GPIO.setup(35, GPIO.IN, pull_up_down=up)   # Garaj Kapısı
+GPIO.setup(36, GPIO.IN, pull_up_down=up)   # Bahçe Kapısı
+GPIO.setup(37, GPIO.IN, pull_up_down=up)   # PIR sensör 1
+GPIO.setup(38, GPIO.IN, pull_up_down=up)   # PIR sensör 2
 
 win = Tk()
 ex1 = True
@@ -77,6 +77,13 @@ hf = open("hidrofile.txt", "r")
 hidroState = hf.read(1)
 print("HIDROFOR is ", hidroState)
 hf.close()
+
+pn = open("pushnotif.txt", "r")
+notifState = pn.read(1)
+print("NOTIFICATION is ", notifState)
+pn.close()
+
+
 
 # Date and Time***********************
 myFont = font.Font(family="Helvetica", size=24, weight="bold")
@@ -157,8 +164,6 @@ def lampON():
         GPIO.output(13, GPIO.LOW)
         lf.write("1")
         lampButton["text"] = "LAMBA ON"
-        bullet_msg = "gate_opened"
-        post_request(bullet_msg)
         print(time.strftime("%d:%m:%Y - %H:%M:%S Lamp On", time.localtime(now)))
         lf.close()
     else:
@@ -203,6 +208,22 @@ def hidroforON():
         print(time.strftime("%d:%m:%Y - %H:%M:%S Hidrofor Off", time.localtime(now)))
         hf.close()
 
+def pushNotif():
+    print("NOTIFICATION button pressed")
+    hf = open("pushnotif.txt", "w")
+    if notifState=0:
+        notifState=1
+        pn.write("1")
+        notifButton["text"] = "BILDIRIM ON"
+        print(time.strftime("%d:%m:%Y - %H:%M:%S Hidrofor On", time.localtime(now)))
+        pn.close()
+    else:
+        GPIO.output(33, GPIO.HIGH)
+        pn.write("0")
+        notifButton["text"] = "BILDIRIM OFF"
+        print(time.strftime("%d:%m:%Y - %H:%M:%S Hidrofor Off", time.localtime(now)))
+        pn.close()
+
 
 def exitProgram():
     print("Exit Button pressed")
@@ -214,12 +235,19 @@ def lampturnON():
     if GPIO.input(13) == 1:  # TURN ON
         lampON()
 
-
-
 def lampturnOFF():
     if GPIO.input(13) == 0:  # TURN OFF
         lampON()
 
+def gate_opened():
+    if notifState==1:
+        bullet_msg = "gate_opened %d:%m:%Y - %H:%M:%S"
+        post_request(bullet_msg)
+
+def gate_closed():
+    if notifState==1:
+        bullet_msg = "gate_closed %d:%m:%Y - %H:%M:%S"
+        post_request(bullet_msg)
 
 def tick():
     global ex1
@@ -278,8 +306,11 @@ SICAKSUButton.grid(row=5, column=1)
 hidroButton = Button(win, font=myFont, command=hidroforON, height=1, width=12)
 hidroButton.grid(row=6, column=1)
 exitButton = Button(win, text="SON", font=myFont, command=exitProgram, height=1, width=6)
-exitButton.grid(row=10, column=1)
-
+exitButton.grid(row=12, column=1)
+notifButton = Button(win, text="BİLDİRİM", font=myFont, command=pushNotif, height=1, width=6)
+notifButton.grid(row=10, column=1)
+gateLabel = Label(win, text="GATE", font=myFont, heigh=1, width=20)
+gateLabel.grid(row=11, column=1)
 
 def updateTestLabel():
     ft = read_temp(device_file)
@@ -295,32 +326,46 @@ updateTestLabel();
 if boilerState == "1":
     GPIO.output(12, GPIO.LOW)
     boilerButton["text"] = "ISITMA ON"
-if boilerState == "0":
+else:
     GPIO.output(12, GPIO.HIGH)
     boilerButton["text"] = "ISITMA OFF"
 if waterState == "1":
     GPIO.output(11, GPIO.LOW)
     waterButton["text"] = "SULAMA ON"
-if waterState == "0":
+else:
     GPIO.output(11, GPIO.HIGH)
     waterButton["text"] = "SULAMA OFF"
 if lampState == "1":
     GPIO.output(13, GPIO.LOW)
     lampButton["text"] = "LAMBA ON"
-if lampState == "0":
+else:
     GPIO.output(13, GPIO.HIGH)
     lampButton["text"] = "LAMBA OFF"
 if SICAKSUState == "1":
     GPIO.output(15, GPIO.LOW)
     SICAKSUButton["text"] = "SICAK SU ON"
-if SICAKSUState == "0":
+else:
     GPIO.output(15, GPIO.HIGH)
     SICAKSUButton["text"] = "SICAK SU OFF"
 if hidroState == "1":
     GPIO.output(33, GPIO.LOW)
     hidroButton["text"] = "HIDRO ON"
-if hidroState == "0":
+else:
     GPIO.output(33, GPIO.HIGH)
     hidroButton["text"] = "HIDRO OFF"
+
+if GPIO.input(36):
+    gateLabel["text"]= "GATE OPEN"
+else:
+    gateLabel["text"]= "GATE CLOSED"
+
+GPIO.add_event_detect(36,GPIO.RISING,callback=gate_opened) # Setup event on pin 36 rising edge
+GPIO.add_event_detect(36,GPIO.FALLING,callback=gate_closed) # Setup event on pin 36 falling edge
+GPIO.cleanup() # Clean up
+
+
+
+
+
 tick()
 mainloop()
