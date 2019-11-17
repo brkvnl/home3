@@ -1,6 +1,6 @@
 # Made by:
 # Burak Vanli
-# 15 Nov 2019
+# 17 Nov 2019
 
 
 from tkinter import *
@@ -32,7 +32,7 @@ GPIO.setup(29, GPIO.OUT)  # Vana Kapama
 GPIO.setup(31, GPIO.OUT)  # Vana Acma
 GPIO.setup(32, GPIO.OUT)  # Egzersiz
 GPIO.setup(33, GPIO.OUT)  # Hidrofor
-GPIO.setup(35, GPIO.IN, GPIO.PUD_UP)   # Garaj Kapısı
+GPIO.setup(35, GPIO.IN, GPIO.PUD_UP)   # Ev Kapısı
 GPIO.setup(36, GPIO.IN, GPIO.PUD_UP)   # Bahçe Kapısı
 GPIO.setup(37, GPIO.IN, GPIO.PUD_UP)   # PIR sensör 1
 GPIO.setup(38, GPIO.IN, GPIO.PUD_UP)   # PIR sensör 2
@@ -78,10 +78,9 @@ hidroState = hf.read(1)
 print("HIDROFOR is ", hidroState)
 hf.close()
 
-pn = open("pushnotif.txt", "r")
-notifState = pn.read(1)
-print("NOTIFICATION is ", notifState)
-pn.close()
+
+notifState = 1
+
 
 
 
@@ -211,19 +210,16 @@ def hidroforON():
 def pushNotif():
     global notifState
     print("NOTIFICATION button pressed")
-    pn = open("pushnotif.txt", "w")
     if notifState==0:
         notifState=1
-        pn.write("1")
         notifButton["text"] = "BILDIRIM ON"
         print(time.strftime("%d:%m:%Y - %H:%M:%S Bildirim On", time.localtime(now)))
-        pn.close()
+
     else:
         notifState=0
-        pn.write("0")
         notifButton["text"] = "BILDIRIM OFF"
         print(time.strftime("%d:%m:%Y - %H:%M:%S Bildirim Off", time.localtime(now)))
-        pn.close()
+
 
 
 def exitProgram():
@@ -247,7 +243,12 @@ def gate_opened(self):
         print(time.strftime("%d:%m:%Y - %H:%M:%S", time.localtime(now)))
         r = requests.post('https://maker.ifttt.com/trigger/'+bullet_msg+'/with/key/bgpeGDDB2101-7ibbd9P7')
 
-
+def door_opened(self):
+    if notifState==1:
+        bullet_msg = "door_opened"
+        print("EV KAPISI ACILIDI")
+        print(time.strftime("%d:%m:%Y - %H:%M:%S", time.localtime(now)))
+        r = requests.post('https://maker.ifttt.com/trigger/'+bullet_msg+'/with/key/bgpeGDDB2101-7ibbd9P7')
 
 def tick():
     global ex1
@@ -284,14 +285,19 @@ def tick():
         boilerON()
         exheat = False
         print(time.strftime("%d:%m:%Y - %H:%M:%S KAZANI AC", time.localtime(now)))
+
     if (GPIO.input(36)==GPIO.HIGH):
-        gateLabel["text"]= "BAH KAPI AÇIK"
+        gateLabel["text"]= "GATE OPEN"
     else:
-        gateLabel["text"]= "BAH KAPI KAPALI"
+        gateLabel["text"]= "GATE CLOSED"
+
+    if (GPIO.input(35)==GPIO.HIGH):
+        doorLabel["text"]= "DOOR OPEN"
+    else:
+        doorLabel["text"]= "DOOR CLOSED"
     clock.after(200, tick)
 
-
-win.title("Yazarlar 22 Sinan")
+win.title("Mod. 2019-11-17")
 win.geometry("400x600")
 clock = Label(win, font=myFont, height=1, width=20)
 clock.grid(row=1, column=1)
@@ -310,11 +316,15 @@ SICAKSUButton.grid(row=5, column=1)
 hidroButton = Button(win, font=myFont, command=hidroforON, height=1, width=12)
 hidroButton.grid(row=6, column=1)
 exitButton = Button(win, text="SON", font=myFont, command=exitProgram, height=1, width=6)
-exitButton.grid(row=12, column=1)
+exitButton.grid(row=13, column=1)
 notifButton = Button(win, text="BILDIRIM", font=myFont, command=pushNotif, height=1, width=12)
 notifButton.grid(row=10, column=1)
 gateLabel = Label(win, text="GATE", font=myFont, heigh=1, width=20)
 gateLabel.grid(row=11, column=1)
+doorLabel = Label(win, text="DOOR", font=myFont, heigh=1, width=20)
+doorLabel.grid(row=12, column=1)
+
+
 
 def updateTestLabel():
     ft = read_temp(device_file)
@@ -328,7 +338,7 @@ def updateTestLabel():
 
 updateTestLabel();
 
-#bu kısım sade ilk çalışmada butonların yazılarını düzenliyor 
+#bu kısım sade ilk çalışmada butonların yazılarını düzenliyor
 if boilerState == "1":
     GPIO.output(12, GPIO.LOW)
     boilerButton["text"] = "ISITMA ON"
@@ -359,13 +369,14 @@ if hidroState == "1":
 else:
     GPIO.output(33, GPIO.HIGH)
     hidroButton["text"] = "HIDRO OFF"
-if notifState == "1":
+if notifState == 1:
     notifButton["text"] = "BILDIRIM ON"
 else:
-    notifButton["text"] = "BILDIRIM OFF"    
+    notifButton["text"] = "BILDIRIM OFF"
 
 
 GPIO.add_event_detect(36, GPIO.RISING, callback=gate_opened, bouncetime=1000) # Setup event on pin 36 rising edge
+GPIO.add_event_detect(35, GPIO.RISING, callback=door_opened, bouncetime=1000) # Setup event on pin 36 rising edge
 
 tick()
 mainloop()
