@@ -77,13 +77,7 @@ hf = open("hidrofile.txt", "r")
 hidroState = hf.read(1)
 print("HIDROFOR is ", hidroState)
 hf.close()
-
-
 notifState = 1
-
-
-
-
 # Date and Time***********************
 myFont = font.Font(family="Helvetica", size=24, weight="bold")
 
