@@ -1,6 +1,6 @@
 # Made by:
 # Burak Vanli
-# 20 Nov 2019
+ModifDate="20 Nov 2019"
 
 
 from tkinter import *
@@ -292,7 +292,7 @@ def tick():
         doorLabel["text"]= "DOOR CLOSED"
     clock.after(200, tick)
 
-win.title("Mod. 2019-11-17")
+win.title(ModifDate)
 win.geometry("400x600")
 clock = Label(win, font=myFont, height=1, width=20)
 clock.grid(row=1, column=1)
