@@ -231,14 +231,15 @@ def lampturnOFF():
         lampON()
 
 def gate_opened(self):
-    if notifState==1:
+    time.sleep(1)
+    if notifState==1 and GPIO.input(36)==GPIO.HIGH:
         bullet_msg = "gate_opened"
-        print("BAHCE KAPISI ACILIDI")
         print(time.strftime("%d:%m:%Y - %H:%M:%S", time.localtime(now)))
         r = requests.post('https://maker.ifttt.com/trigger/'+bullet_msg+'/with/key/bgpeGDDB2101-7ibbd9P7')
 
 def door_opened(self):
-    if notifState==1:
+    time.sleep(1)
+    if notifState==1 and GPIO.input(35)==GPIO.HIGH:
         bullet_msg = "door_opened"
         print("EV KAPISI ACILIDI")
         print(time.strftime("%d:%m:%Y - %H:%M:%S", time.localtime(now)))
